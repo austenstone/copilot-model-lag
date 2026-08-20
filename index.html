@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How fast do new AI models reach GitHub Copilot?</title>
+<meta name="description" content="Measuring the lag between an AI model's public release and its availability in GitHub Copilot. 46 model launches, September 2024 to August 2026.">
+<meta property="og:title" content="How fast do new AI models reach GitHub Copilot?">
+<meta property="og:description" content="46 model launches measured. Median lag: 0 days.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9889;</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-elev: #151b23;
+    --border: #3d444d;
+    --border-soft: #262c36;
+    --fg: #f0f6fc;
+    --fg-muted: #9198a1;
+    --accent: #4493f8;
+    --good: #3fb950;
+    --warn: #d29922;
+    --bad: #f85149;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --display: "Newsreader", ui-serif, Georgia, "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  header { padding: 72px 0 40px; border-bottom: 1px solid var(--border-soft); }
+  h1 { font-family: var(--display); font-weight: 400; font-size: clamp(34px, 5.6vw, 54px); line-height: 1.08; margin: 0 0 18px; letter-spacing: -0.015em; }
+  .lede { font-size: 19px; color: var(--fg-muted); max-width: 62ch; margin: 0; }
+  .meta { margin-top: 24px; font-size: 14px; color: var(--fg-muted); }
+
+  h2 { font-family: var(--display); font-weight: 400; font-size: 29px; margin: 56px 0 8px; letter-spacing: -0.01em; }
+  h2 + p.sub { margin: 0 0 24px; color: var(--fg-muted); max-width: 68ch; }
+  h3 { font-size: 17px; margin: 32px 0 8px; }
+
+  .stats { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin: 40px 0 8px; }
+  .stat { background: var(--bg-elev); border: 1px solid var(--border-soft); border-radius: 10px; padding: 20px; }
+  .stat .n { font-size: 34px; font-weight: 650; line-height: 1.1; letter-spacing: -0.02em; }
+  .stat .l { font-size: 13px; color: var(--fg-muted); margin-top: 6px; }
+  .stat.hero .n { color: var(--good); }
+
+  .card { background: var(--bg-elev); border: 1px solid var(--border-soft); border-radius: 10px; padding: 16px; margin-top: 8px; }
+  .chart { height: 460px; }
+  .chart.short { height: 340px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border-soft); }
+  th { color: var(--fg-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+  th[data-sort] { cursor: pointer; user-select: none; }
+  th[data-sort]:hover { color: var(--fg); }
+  th[data-sort]::after { content: " \2195"; opacity: 0.3; }
+  th[data-sort].asc::after { content: " \2191"; opacity: 1; color: var(--accent); }
+  th[data-sort].desc::after { content: " \2193"; opacity: 1; color: var(--accent); }
+  tbody tr:hover { background: rgba(255,255,255,0.03); }
+  td.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  td.date { font-family: var(--mono); font-size: 13px; color: var(--fg-muted); white-space: nowrap; }
+
+  .lag { display: inline-block; min-width: 46px; text-align: right; font-family: var(--mono); font-weight: 600; }
+  .lag.zero { color: var(--good); }
+  .lag.week { color: var(--warn); }
+  .lag.slow { color: var(--bad); }
+
+  .pill { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--fg-muted); white-space: nowrap; }
+
+  .bar { height: 6px; border-radius: 3px; background: var(--good); display: block; min-width: 2px; }
+
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 20px 0 12px; }
+  input[type=search], select {
+    background: var(--bg); color: var(--fg); border: 1px solid var(--border);
+    border-radius: 7px; padding: 7px 11px; font-size: 14px; font-family: inherit;
+  }
+  input[type=search] { min-width: 220px; }
+  input[type=search]:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .count { color: var(--fg-muted); font-size: 13px; margin-left: auto; }
+
+  .note { font-size: 13px; color: var(--fg-muted); }
+  .callout { background: var(--bg-elev); border: 1px solid var(--border-soft); padding: 22px 26px; border-radius: 10px; margin: 20px 0; }
+  .callout p { font-family: var(--display); font-size: 19px; line-height: 1.55; color: var(--fg); }
+  .callout p:first-child { margin-top: 0; }
+  .callout p:last-child { margin-bottom: 0; }
+
+  ul.tight li { margin-bottom: 8px; }
+
+  footer { margin: 80px 0 60px; padding-top: 28px; border-top: 1px solid var(--border-soft); color: var(--fg-muted); font-size: 14px; }
+
+  .scroller { overflow-x: auto; }
+  @media (max-width: 640px) {
+    header { padding: 48px 0 32px; }
+    .count { margin-left: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>How fast do new AI models reach GitHub Copilot?</h1>
+  <p class="lede">
+    Every time a frontier model ships, someone asks how long until it lands in Copilot.
+    This measures it: the gap between a vendor's public release and the model showing up
+    in GitHub Copilot, across <strong id="hdr-count">46</strong> launches from September 2024 to August 2026.
+  </p>
+  <p class="meta">
+    Built from public sources only &mdash; vendor announcements and the
+    <a href="https://github.blog/changelog/label/copilot/">GitHub Changelog</a>.
+    Data last generated <span id="hdr-generated" class="mono">&mdash;</span>.
+  </p>
+</header>
+
+<div class="stats" id="stats"></div>
+<p class="note">Lag is measured in calendar days from the vendor's public announcement to the first date the model was selectable in GitHub Copilot (public preview counted as available).</p>
+
+<h2>The short answer</h2>
+<div class="callout">
+  <p><strong>For frontier models from major labs, the lag is usually zero.</strong> GitHub is a launch partner
+  with Anthropic, OpenAI, and Google, so flagship models tend to appear in Copilot the same day the vendor
+  announces them &mdash; sometimes before.</p>
+  <p>Lag shows up in two specific places: <strong>sub-variants</strong> that ship after the headline model
+  (Codex-Max, mini tiers), and <strong>vendors GitHub isn't a launch partner with</strong>, where integration
+  starts only after public release.</p>
+</div>
+
+<h2>Lag over time</h2>
+<p class="sub">Each point is one model launch. Anything on the zero line shipped in Copilot the same day it was announced.</p>
+<div class="card"><div id="chart-scatter" class="chart"></div></div>
+
+<h2>How quickly are models available?</h2>
+<p class="sub">Share of launches available in Copilot within N days of the vendor's announcement.</p>
+<div class="card"><div id="chart-cume" class="chart short"></div></div>
+
+<h2>By vendor</h2>
+<p class="sub">Launch-partner status is the dominant variable. It shows up cleanly here.</p>
+<div class="card scroller">
+  <table id="vendor-table">
+    <thead><tr>
+      <th>Vendor</th><th class="num">Launches</th><th class="num">Same day</th>
+      <th class="num">Median</th><th class="num">Mean</th><th style="width:30%">Same-day rate</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<h2>Trend by half-year</h2>
+<p class="sub">The pipeline got dramatically faster after 2024, then held steady. Since 2025 the mean has stayed in low single-digit days.</p>
+<div class="card scroller">
+  <table id="era-table">
+    <thead><tr>
+      <th>Period</th><th class="num">Launches</th><th class="num">Same day</th>
+      <th class="num">Median</th><th class="num">Mean</th><th style="width:30%">Same-day rate</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<h2>Every launch</h2>
+<p class="sub">Both dates are linked to their source. Sort any column; search filters model and vendor.</p>
+<div class="controls">
+  <input type="search" id="q" placeholder="Filter models&hellip;" aria-label="Filter models">
+  <select id="vendor-filter" aria-label="Filter by vendor"><option value="">All vendors</option></select>
+  <select id="lag-filter" aria-label="Filter by lag">
+    <option value="">Any lag</option>
+    <option value="0">Same day or earlier</option>
+    <option value="7">Within a week</option>
+    <option value="slow">More than a week</option>
+  </select>
+  <span class="count" id="row-count"></span>
+</div>
+<div class="card scroller">
+  <table id="model-table">
+    <thead><tr>
+      <th data-sort="model">Model</th>
+      <th data-sort="vendor">Vendor</th>
+      <th data-sort="vendorDate">Vendor release</th>
+      <th data-sort="copilotDate">In Copilot</th>
+      <th data-sort="lagDays" class="num">Lag</th>
+      <th data-sort="stage">Stage</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+<p class="note" id="notes-block"></p>
+
+<h2>Method &amp; caveats</h2>
+<ul class="tight note">
+  <li><strong>Vendor date</strong> is the public announcement date from the vendor's own blog or newsroom, not an
+  API model-ID snapshot date. Snapshot strings like <code>claude-opus-4-5-20251101</code> are training cutoffs and
+  do <em>not</em> indicate release.</li>
+  <li><strong>Copilot date</strong> is the first GitHub Changelog entry announcing availability in Copilot. Where a
+  model shipped to public preview first, the preview date is used &mdash; that is when users could actually pick it.
+  From early 2026 onward GitHub largely stopped using a preview stage and ships straight to GA.</li>
+  <li><strong>Negative lag is real.</strong> Grok Code Fast 1 was available in Copilot as the stealth model
+  &ldquo;sonic&rdquo; two days before xAI announced it publicly.</li>
+  <li><strong>Rollout is not instantaneous across surfaces.</strong> A model reaching VS Code on day 0 may reach
+  Visual Studio, JetBrains, Xcode, and Eclipse days later. This tracks first availability, not full fleet coverage.</li>
+  <li><strong>Some vendor dates are genuinely ambiguous</strong> &mdash; experimental versus GA, partner preview versus
+  public launch. Rows where that choice materially affects the number carry a footnote in the table above.</li>
+  <li>This is an independent analysis of public data. It is not a GitHub commitment, roadmap, or service-level
+  agreement, and it does not predict future releases.</li>
+</ul>
+
+<h2>Data</h2>
+<p class="note">
+  Take it and do something better with it:
+  <a href="data.json">data.json</a> &middot;
+  <a href="data.csv">data.csv</a> &middot;
+  <a href="build.py">build.py</a>
+</p>
+
+<footer>
+  <p>Built by <a href="https://github.com/austenstone">@austenstone</a>.
+  Source and corrections: <a href="https://github.com/austenstone/copilot-model-lag">austenstone/copilot-model-lag</a>.</p>
+  <p>Public data, independently compiled. Not affiliated with or endorsed by any model vendor.
+  Views are my own.</p>
+</footer>
+
+</div>
+
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+<script>
+const VENDOR_COLORS = {
+  "Anthropic": "#d4a27f",
+  "OpenAI": "#10a37f",
+  "Google": "#4493f8",
+  "xAI": "#c9d1d9",
+  "Moonshot AI": "#bc8cff",
+  "Microsoft AI": "#f0883e"
+};
+
+const fmtDate = iso => new Date(iso + "T00:00:00Z").toLocaleDateString("en-US",
+  { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
+const utc = iso => Date.UTC(...iso.split("-").map((v, i) => i === 1 ? +v - 1 : +v));
+const median = xs => { const s = [...xs].sort((a, b) => a - b);
+  return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2; };
+const mean = xs => xs.reduce((a, b) => a + b, 0) / xs.length;
+const pct = x => Math.round(x * 100) + "%";
+const lagClass = d => d <= 0 ? "zero" : d <= 7 ? "week" : "slow";
+const lagLabel = d => d === 0 ? "0" : d > 0 ? "+" + d : String(d);
+
+Highcharts.setOptions({
+  chart: { backgroundColor: "transparent", style: { fontFamily: "inherit" } },
+  title: { text: null },
+  credits: { enabled: false },
+  legend: { itemStyle: { color: "#9198a1", fontWeight: "500" }, itemHoverStyle: { color: "#f0f6fc" } },
+  xAxis: { lineColor: "#3d444d", tickColor: "#3d444d", labels: { style: { color: "#9198a1" } },
+           title: { style: { color: "#9198a1" } }, gridLineColor: "#21262d" },
+  yAxis: { gridLineColor: "#21262d", labels: { style: { color: "#9198a1" } },
+           title: { style: { color: "#9198a1" } } },
+  tooltip: { backgroundColor: "#151b23", borderColor: "#3d444d", style: { color: "#f0f6fc" } }
+});
+
+let MODELS = [];
+
+fetch("data.json")
+  .then(r => r.json())
+  .then(payload => {
+    MODELS = payload.models;
+    document.getElementById("hdr-count").textContent = payload.count;
+    document.getElementById("hdr-generated").textContent = fmtDate(payload.generated);
+    renderStats();
+    renderScatter();
+    renderCumulative();
+    renderGrouped("vendor-table", groupBy(m => m.vendor), true);
+    renderGrouped("era-table", groupBy(era), false);
+    initTable();
+    renderNotes();
+  })
+  .catch(() => {
+    document.getElementById("stats").innerHTML =
+      '<p class="note">Could not load <code>data.json</code>. If you are opening this file directly, ' +
+      'run a local server instead: <code>python3 -m http.server</code></p>';
+  });
+
+function era(m) {
+  const [y, mo] = m.vendorDate.split("-").map(Number);
+  return y + (mo <= 6 ? " H1" : " H2");
+}
+
+function renderStats() {
+  const lags = MODELS.map(m => m.lagDays);
+  const dayZero = lags.filter(d => d <= 0).length;
+  const week = lags.filter(d => d <= 7).length;
+  const cards = [
+    { n: "0", l: "Median days to Copilot", hero: true },
+    { n: pct(dayZero / lags.length), l: "Shipped same day or earlier" },
+    { n: pct(week / lags.length), l: "Shipped within a week" },
+    { n: mean(lags).toFixed(1) + "d", l: "Mean lag (skewed by outliers)" },
+    { n: String(MODELS.length), l: "Model launches measured" }
+  ];
+  document.getElementById("stats").innerHTML = cards.map(c =>
+    `<div class="stat${c.hero ? " hero" : ""}"><div class="n">${c.n}</div><div class="l">${c.l}</div></div>`
+  ).join("");
+}
+
+function renderScatter() {
+  const byVendor = {};
+  MODELS.forEach(m => (byVendor[m.vendor] ||= []).push({
+    x: utc(m.copilotDate), y: m.lagDays, name: m.model, stage: m.stage
+  }));
+  const series = Object.entries(byVendor)
+    .sort((a, b) => b[1].length - a[1].length)
+    .map(([vendor, data]) => ({ name: vendor, color: VENDOR_COLORS[vendor] || "#9198a1", data }));
+
+  Highcharts.chart("chart-scatter", {
+    chart: { type: "scatter", zooming: { type: "xy" } },
+    xAxis: { type: "datetime", title: { text: "Date available in GitHub Copilot" } },
+    yAxis: {
+      title: { text: "Days after vendor release" },
+      plotLines: [{ value: 0, color: "#3fb950", width: 1, zIndex: 3,
+        label: { text: "Same day", style: { color: "#3fb950", fontSize: "11px" }, align: "right", x: -6, y: -6 } }],
+      plotBands: [{ from: -10, to: 7, color: "rgba(63,185,80,0.06)" }]
+    },
+    plotOptions: { scatter: { marker: { radius: 5.5, symbol: "circle",
+      states: { hover: { radiusPlus: 3, lineWidth: 2, lineColor: "#f0f6fc" } } } } },
+    tooltip: {
+      useHTML: true,
+      pointFormatter() {
+        const d = this.y;
+        const phrase = d === 0 ? "Same day" : d < 0 ? `${-d} day${-d === 1 ? "" : "s"} <em>before</em> release`
+          : `${d} day${d === 1 ? "" : "s"} after release`;
+        return `<strong>${this.name}</strong><br>${this.series.name} &middot; ${this.stage}<br>
+                <span style="color:${d <= 0 ? "#3fb950" : d <= 7 ? "#d29922" : "#f85149"}">${phrase}</span>`;
+      },
+      headerFormat: ""
+    },
+    series
+  });
+}
+
+function renderCumulative() {
+  const lags = MODELS.map(m => m.lagDays);
+  const marks = [0, 1, 3, 7, 14, 30, 60];
+  Highcharts.chart("chart-cume", {
+    chart: { type: "column" },
+    xAxis: { categories: marks.map(d => d === 0 ? "Same day" : `\u2264 ${d}d`), title: { text: null } },
+    yAxis: { max: 100, title: { text: "% of launches available" }, labels: { format: "{value}%" } },
+    tooltip: { pointFormat: "<b>{point.y:.0f}%</b> of launches ({point.count} of " + lags.length + ")" },
+    plotOptions: { column: { borderWidth: 0, borderRadius: 3, color: "#3fb950",
+      dataLabels: { enabled: true, format: "{y:.0f}%", style: { color: "#f0f6fc", textOutline: "none", fontWeight: "600" } } } },
+    legend: { enabled: false },
+    series: [{
+      name: "Cumulative availability",
+      data: marks.map(d => {
+        const count = lags.filter(x => x <= d).length;
+        return { y: (count / lags.length) * 100, count };
+      })
+    }]
+  });
+}
+
+function groupBy(keyFn) {
+  const groups = {};
+  MODELS.forEach(m => (groups[keyFn(m)] ||= []).push(m.lagDays));
+  return groups;
+}
+
+function renderGrouped(tableId, groups, sortByCount) {
+  const rows = Object.entries(groups).map(([key, lags]) => ({
+    key, n: lags.length,
+    zero: lags.filter(d => d <= 0).length,
+    median: median(lags), mean: mean(lags)
+  }));
+  rows.sort(sortByCount
+    ? (a, b) => a.mean - b.mean || b.n - a.n
+    : (a, b) => a.key.localeCompare(b.key));
+
+  document.querySelector(`#${tableId} tbody`).innerHTML = rows.map(r => {
+    const rate = r.zero / r.n;
+    return `<tr>
+      <td><strong>${r.key}</strong></td>
+      <td class="num">${r.n}</td>
+      <td class="num">${r.zero}</td>
+      <td class="num">${r.median.toFixed(1)}d</td>
+      <td class="num">${r.mean.toFixed(1)}d</td>
+      <td><span class="bar" style="width:${Math.max(rate * 100, 1)}%"></span>
+          <span class="note">${pct(rate)}</span></td>
+    </tr>`;
+  }).join("");
+}
+
+let sortKey = "vendorDate", sortDir = -1;
+
+function initTable() {
+  const vendors = [...new Set(MODELS.map(m => m.vendor))].sort();
+  document.getElementById("vendor-filter").insertAdjacentHTML("beforeend",
+    vendors.map(v => `<option value="${v}">${v}</option>`).join(""));
+
+  document.querySelectorAll("#model-table th[data-sort]").forEach(th => {
+    th.addEventListener("click", () => {
+      const key = th.dataset.sort;
+      sortDir = key === sortKey ? -sortDir : (key === "lagDays" ? -1 : 1);
+      sortKey = key;
+      drawRows();
+    });
+  });
+  ["q", "vendor-filter", "lag-filter"].forEach(id =>
+    document.getElementById(id).addEventListener("input", drawRows));
+  drawRows();
+}
+
+function drawRows() {
+  const q = document.getElementById("q").value.trim().toLowerCase();
+  const vendor = document.getElementById("vendor-filter").value;
+  const lagBucket = document.getElementById("lag-filter").value;
+
+  let rows = MODELS.filter(m => {
+    if (vendor && m.vendor !== vendor) return false;
+    if (q && !(m.model + " " + m.vendor).toLowerCase().includes(q)) return false;
+    if (lagBucket === "0" && m.lagDays > 0) return false;
+    if (lagBucket === "7" && m.lagDays > 7) return false;
+    if (lagBucket === "slow" && m.lagDays <= 7) return false;
+    return true;
+  });
+
+  rows.sort((a, b) => {
+    const x = a[sortKey], y = b[sortKey];
+    return (typeof x === "number" ? x - y : String(x).localeCompare(String(y))) * sortDir;
+  });
+
+  document.querySelectorAll("#model-table th[data-sort]").forEach(th => {
+    th.classList.remove("asc", "desc");
+    if (th.dataset.sort === sortKey) th.classList.add(sortDir === 1 ? "asc" : "desc");
+  });
+
+  document.querySelector("#model-table tbody").innerHTML = rows.map(m => {
+    const noteMark = m.note ? ` <a href="#note-${slug(m.model)}" title="See note" style="color:var(--fg-muted)">*</a>` : "";
+    const vLink = m.vendorUrl
+      ? `<a href="${m.vendorUrl}" target="_blank" rel="noopener">${fmtDate(m.vendorDate)}</a>` : fmtDate(m.vendorDate);
+    const cLink = m.changelogUrl
+      ? `<a href="${m.changelogUrl}" target="_blank" rel="noopener">${fmtDate(m.copilotDate)}</a>` : fmtDate(m.copilotDate);
+    return `<tr>
+      <td><strong>${m.model}</strong>${noteMark}</td>
+      <td>${m.vendor}</td>
+      <td class="date">${vLink}</td>
+      <td class="date">${cLink}</td>
+      <td class="num"><span class="lag ${lagClass(m.lagDays)}">${lagLabel(m.lagDays)}</span></td>
+      <td><span class="pill">${m.stage}</span></td>
+    </tr>`;
+  }).join("");
+
+  document.getElementById("row-count").textContent =
+    `${rows.length} of ${MODELS.length} launches`;
+}
+
+const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+function renderNotes() {
+  const noted = MODELS.filter(m => m.note);
+  document.getElementById("notes-block").innerHTML = noted.map(m =>
+    `<span id="note-${slug(m.model)}">* <strong>${m.model}</strong> &mdash; ${m.note}</span>`
+  ).join("<br>");
+}
+</script>
+</body>
+</html>
