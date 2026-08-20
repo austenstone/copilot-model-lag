@@ -11,7 +11,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9889;</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #0d1117;
@@ -26,33 +26,55 @@
     --bad: #f85149;
     --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
     --display: "Newsreader", ui-serif, Georgia, "Times New Roman", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+    --measure: 52ch;
+    --measure-wide: 58ch;
   }
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
   body {
     margin: 0;
     background: var(--bg);
     color: var(--fg);
-    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+    font: 16px/1.65 var(--sans);
+    font-optical-sizing: auto;
+    text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
   }
+  p, li, dd { text-wrap: pretty; }
+  h1, h2, h3, .lede, .stat .l { text-wrap: balance; }
+  h1, h2, h3 { hyphens: manual; }
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
   .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
 
-  header { padding: 72px 0 40px; border-bottom: 1px solid var(--border-soft); }
-  h1 { font-family: var(--display); font-weight: 400; font-size: clamp(34px, 5.6vw, 54px); line-height: 1.08; margin: 0 0 18px; letter-spacing: -0.015em; }
-  .lede { font-size: 19px; color: var(--fg-muted); max-width: 62ch; margin: 0; }
-  .meta { margin-top: 24px; font-size: 14px; color: var(--fg-muted); }
+  header { padding: 84px 0 44px; border-bottom: 1px solid var(--border-soft); }
+  .eyebrow {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.11em; text-transform: uppercase;
+    color: var(--fg-muted); margin: 0 0 20px;
+  }
+  h1 {
+    font-family: var(--display); font-weight: 400;
+    font-size: clamp(36px, 5.4vw, 56px); line-height: 1.06;
+    margin: 0 0 22px; letter-spacing: -0.018em; max-width: 26ch;
+  }
+  .lede { font-size: 19.5px; line-height: 1.55; color: var(--fg-muted); max-width: var(--measure); margin: 0; }
+  .lede strong { color: var(--fg); font-weight: 600; }
+  .meta { margin-top: 22px; font-size: 14px; line-height: 1.6; color: var(--fg-muted); max-width: var(--measure-wide); }
 
-  h2 { font-family: var(--display); font-weight: 400; font-size: 29px; margin: 56px 0 8px; letter-spacing: -0.01em; }
-  h2 + p.sub { margin: 0 0 24px; color: var(--fg-muted); max-width: 68ch; }
+  h2 {
+    font-family: var(--display); font-weight: 400;
+    font-size: clamp(25px, 3vw, 31px); line-height: 1.15;
+    margin: 64px 0 10px; letter-spacing: -0.012em; max-width: 30ch;
+  }
+  h2 + p.sub { margin: 0 0 26px; color: var(--fg-muted); max-width: var(--measure-wide); }
   h3 { font-size: 17px; margin: 32px 0 8px; }
+  em { font-style: italic; }
 
-  .stats { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin: 40px 0 8px; }
+  .stats { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(152px, 1fr)); margin: 40px 0 10px; }
   .stat { background: var(--bg-elev); border: 1px solid var(--border-soft); border-radius: 10px; padding: 20px; }
-  .stat .n { font-size: 34px; font-weight: 650; line-height: 1.1; letter-spacing: -0.02em; }
-  .stat .l { font-size: 13px; color: var(--fg-muted); margin-top: 6px; }
+  .stat .n { font-size: clamp(30px, 3.4vw, 36px); font-weight: 650; line-height: 1.05; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 13px; line-height: 1.45; color: var(--fg-muted); margin-top: 8px; }
   .stat.hero .n { color: var(--good); }
 
   .card { background: var(--bg-elev); border: 1px solid var(--border-soft); border-radius: 10px; padding: 16px; margin-top: 8px; }
@@ -89,19 +111,30 @@
   input[type=search]:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
   .count { color: var(--fg-muted); font-size: 13px; margin-left: auto; }
 
-  .note { font-size: 13px; color: var(--fg-muted); }
-  .callout { background: var(--bg-elev); border: 1px solid var(--border-soft); padding: 22px 26px; border-radius: 10px; margin: 20px 0; }
-  .callout p { font-family: var(--display); font-size: 19px; line-height: 1.55; color: var(--fg); }
+  .note { font-size: 13.5px; line-height: 1.65; color: var(--fg-muted); }
+  .callout { background: var(--bg-elev); border: 1px solid var(--border-soft); padding: 28px 32px; border-radius: 10px; margin: 20px 0; max-width: 640px; }
+  .callout p { font-family: var(--display); font-size: 20px; line-height: 1.5; color: var(--fg); max-width: 46ch; }
   .callout p:first-child { margin-top: 0; }
   .callout p:last-child { margin-bottom: 0; }
 
-  ul.tight li { margin-bottom: 8px; }
+  ul.tight { max-width: var(--measure-wide); padding-left: 1.25em; }
+  ul.tight li { margin-bottom: 11px; }
+  ul.tight li::marker { color: var(--border); }
+  p.note, ul.note { max-width: var(--measure-wide); }
 
-  footer { margin: 80px 0 60px; padding-top: 28px; border-top: 1px solid var(--border-soft); color: var(--fg-muted); font-size: 14px; }
+  footer { margin: 88px 0 64px; padding-top: 28px; border-top: 1px solid var(--border-soft); color: var(--fg-muted); font-size: 14px; line-height: 1.65; }
+  footer p { max-width: var(--measure-wide); }
 
+  .nb { white-space: nowrap; }
   .scroller { overflow-x: auto; }
-  @media (max-width: 640px) {
-    header { padding: 48px 0 32px; }
+  @media (max-width: 760px) {
+    :root { --measure: 100%; --measure-wide: 100%; }
+    header { padding: 52px 0 34px; }
+    h1 { letter-spacing: -0.012em; }
+    .lede { font-size: 18px; }
+    h2 { margin-top: 52px; }
+    .callout { padding: 22px 22px; }
+    .callout p { font-size: 18.5px; }
     .count { margin-left: 0; width: 100%; }
   }
 </style>
@@ -110,21 +143,23 @@
 <div class="wrap">
 
 <header>
-  <h1>How fast do new AI models reach GitHub Copilot?</h1>
+  <p class="eyebrow">GitHub&nbsp;Copilot &middot; Model availability</p>
+  <h1>How fast do new AI models reach GitHub&nbsp;Copilot?</h1>
   <p class="lede">
     Every time a frontier model ships, someone asks how long until it lands in Copilot.
-    This measures it: the gap between a vendor's public release and the model showing up
-    in GitHub Copilot, across <strong id="hdr-count">46</strong> launches from September 2024 to August 2026.
+    This measures the gap between a vendor&rsquo;s public release and the model showing up
+    in GitHub&nbsp;Copilot, across <strong id="hdr-count">46</strong> launches from
+    September&nbsp;2024 to August&nbsp;2026.
   </p>
   <p class="meta">
     Built from public sources only &mdash; vendor announcements and the
-    <a href="https://github.blog/changelog/label/copilot/">GitHub Changelog</a>.
-    Data last generated <span id="hdr-generated" class="mono">&mdash;</span>.
+    <a href="https://github.blog/changelog/label/copilot/">GitHub&nbsp;Changelog</a>.
+    Data last generated <span id="hdr-generated">&mdash;</span>.
   </p>
 </header>
 
 <div class="stats" id="stats"></div>
-<p class="note">Lag is measured in calendar days from the vendor's public announcement to the first date the model was selectable in GitHub Copilot (public preview counted as available).</p>
+<p class="note">Lag is measured in calendar days from the vendor&rsquo;s public announcement to the first date the model was selectable in GitHub&nbsp;Copilot (public preview counted as available).</p>
 
 <h2>The short answer</h2>
 <div class="callout">
@@ -132,7 +167,7 @@
   with Anthropic, OpenAI, and Google, so flagship models tend to appear in Copilot the same day the vendor
   announces them &mdash; sometimes before.</p>
   <p>Lag shows up in two specific places: <strong>sub-variants</strong> that ship after the headline model
-  (Codex-Max, mini tiers), and <strong>vendors GitHub isn't a launch partner with</strong>, where integration
+  (Codex-Max, mini tiers), and <strong>vendors GitHub isn&rsquo;t a launch partner with</strong>, where integration
   starts only after public release.</p>
 </div>
 
@@ -141,7 +176,7 @@
 <div class="card"><div id="chart-scatter" class="chart"></div></div>
 
 <h2>How quickly are models available?</h2>
-<p class="sub">Share of launches available in Copilot within N days of the vendor's announcement.</p>
+<p class="sub">Share of launches available in Copilot within N days of the vendor&rsquo;s announcement.</p>
 <div class="card"><div id="chart-cume" class="chart short"></div></div>
 
 <h2>By vendor</h2>
@@ -198,16 +233,16 @@
 
 <h2>Method &amp; caveats</h2>
 <ul class="tight note">
-  <li><strong>Vendor date</strong> is the public announcement date from the vendor's own blog or newsroom, not an
+  <li><strong>Vendor date</strong> is the public announcement date from the vendor&rsquo;s own blog or newsroom, not an
   API model-ID snapshot date. Snapshot strings like <code>claude-opus-4-5-20251101</code> are training cutoffs and
   do <em>not</em> indicate release.</li>
-  <li><strong>Copilot date</strong> is the first GitHub Changelog entry announcing availability in Copilot. Where a
+  <li><strong>Copilot date</strong> is the first GitHub&nbsp;Changelog entry announcing availability in Copilot. Where a
   model shipped to public preview first, the preview date is used &mdash; that is when users could actually pick it.
   From early 2026 onward GitHub largely stopped using a preview stage and ships straight to GA.</li>
-  <li><strong>Negative lag is real.</strong> Grok Code Fast 1 was available in Copilot as the stealth model
+  <li><strong>Negative lag is real.</strong> Grok Code Fast&nbsp;1 was available in Copilot as the stealth model
   &ldquo;sonic&rdquo; two days before xAI announced it publicly.</li>
-  <li><strong>Rollout is not instantaneous across surfaces.</strong> A model reaching VS Code on day 0 may reach
-  Visual Studio, JetBrains, Xcode, and Eclipse days later. This tracks first availability, not full fleet coverage.</li>
+  <li><strong>Rollout is not instantaneous across surfaces.</strong> A model reaching VS&nbsp;Code on day&nbsp;0 may reach
+  Visual&nbsp;Studio, JetBrains, Xcode, and Eclipse days later. This tracks first availability, not full fleet coverage.</li>
   <li><strong>Some vendor dates are genuinely ambiguous</strong> &mdash; experimental versus GA, partner preview versus
   public launch. Rows where that choice materially affects the number carry a footnote in the table above.</li>
   <li>This is an independent analysis of public data. It is not a GitHub commitment, roadmap, or service-level
@@ -217,14 +252,15 @@
 <h2>Data</h2>
 <p class="note">
   Take it and do something better with it:
-  <a href="data.json">data.json</a> &middot;
-  <a href="data.csv">data.csv</a> &middot;
-  <a href="build.py">build.py</a>
+  <span class="nb"><a href="data.json">data.json</a></span> &middot;
+  <span class="nb"><a href="data.csv">data.csv</a></span> &middot;
+  <span class="nb"><a href="build.py">build.py</a></span>
 </p>
 
 <footer>
   <p>Built by <a href="https://github.com/austenstone">@austenstone</a>.
-  Source and corrections: <a href="https://github.com/austenstone/copilot-model-lag">austenstone/copilot-model-lag</a>.</p>
+  Source and corrections:
+  <span class="nb"><a href="https://github.com/austenstone/copilot-model-lag">austenstone/copilot-model-lag</a></span>.</p>
   <p>Public data, independently compiled. Not affiliated with or endorsed by any model vendor.
   Views are my own.</p>
 </footer>
